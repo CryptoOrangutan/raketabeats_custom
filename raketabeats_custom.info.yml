@@ -3,5 +3,6 @@ type: module
 core: '8.x'
 description: 'Provides access to content for users.'
 package: Custom
+configure: raketabeats_custom.settings
 dependencies:
   - commerce:commerce

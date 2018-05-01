@@ -1,0 +1,7 @@
+raketabeats_custom.settings:
+  path: '/admin/raketabeats_custom/settings'
+  defaults:
+    _form: 'Drupal\raketabeats_custom\Form\ConfigForm'
+    _title: 'Raketabeats settings'
+  requirements:
+    _permission: 'administer site configuration'

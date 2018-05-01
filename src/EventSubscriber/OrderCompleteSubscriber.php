@@ -47,18 +47,21 @@ class OrderCompleteSubscriber implements EventSubscriberInterface {
     $order = $event->getEntity();
     // Order items in the cart.
     $items = $order->getItems();
-  
+    $config = \Drupal::config('raketabeats_custom.settings');
+    
     foreach ($order->getItems() as $order_item) {
       $product_variation = $order_item->getPurchasedEntity();
-      //$title = $product_variation->getTitle();
       $product_id = $product_variation->id();
       $current_product = \Drupal\commerce_product\Entity\Product::load($product_id);
-      $product_roles = $current_product->get('field_roles')->getValue();
+      $role_field = $config->get('field_product_roles');
+      $product_roles = $current_product->get($role_field)->getValue();
     }
   
     $user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id());
-    foreach ($product_roles as $key => $value) {
-      $user->addRole($value);
+    if (!empty($product_roles)) {
+      foreach ($product_roles as $key => $value) {
+        $user->addRole($value);
+      }
     }
     $user->save();
 
