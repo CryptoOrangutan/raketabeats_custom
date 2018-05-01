@@ -1,0 +1,7 @@
+name: Raketa Beats Custom
+type: module
+core: '8.x'
+description: 'Provides access to content for users.'
+package: Custom
+dependencies:
+  - commerce:commerce

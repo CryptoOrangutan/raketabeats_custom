@@ -1,0 +1,6 @@
+services:
+  raketabeats_custom.order_complete:
+    class: Drupal\raketabeats_custom\EventSubscriber\OrderCompleteSubscriber
+    arguments: ['@entity_type.manager']
+    tags:
+      - { name: event_subscriber }
