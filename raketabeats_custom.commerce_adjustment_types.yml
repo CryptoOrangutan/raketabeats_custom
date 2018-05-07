@@ -1,0 +1,4 @@
+raketabeats_adjustment:
+  label: Raketabeats Adjustment
+  has_ui: true
+  weight: 0

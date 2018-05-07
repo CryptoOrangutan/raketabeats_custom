@@ -32,7 +32,6 @@ class OrderCompleteSubscriber implements EventSubscriberInterface {
    */
   static function getSubscribedEvents() {
     $events['commerce_order.place.post_transition'] = ['orderCompleteHandler'];
-    
     return $events;
   }
   
@@ -47,9 +46,10 @@ class OrderCompleteSubscriber implements EventSubscriberInterface {
     $order = $event->getEntity();
     // Order items in the cart.
     $items = $order->getItems();
+    //$order = $order->getTotalPrice();
     $config = \Drupal::config('raketabeats_custom.settings');
     
-    foreach ($order->getItems() as $order_item) {
+    foreach ($items as $order_item) {
       $product_variation = $order_item->getPurchasedEntity();
       $product_id = $product_variation->id();
       $current_product = \Drupal\commerce_product\Entity\Product::load($product_id);
