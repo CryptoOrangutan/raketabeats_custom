@@ -7,7 +7,7 @@ services:
 
   raketabeats_custom.cart_subscriber:
     class: Drupal\raketabeats_custom\EventSubscriber\CartEventSubscriber
-    arguments: ['@entity_type.manager']
+    arguments: ['@entity_type.manager', '@commerce_cart.cart_manager', '@commerce_cart.cart_provider']
     tags:
       - { name: event_subscriber }
 

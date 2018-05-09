@@ -6,7 +6,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\state_machine\Event\WorkflowTransitionEvent;
-use Drupal\commerce_cart\CartProviderInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\commerce_cart\Event\CartEntityAddEvent;
 use Drupal\commerce_cart\Event\CartEvents;
@@ -14,6 +13,7 @@ use Drupal\commerce_order\Entity\Order;
 use Drupal\user\Entity\User;
 use Drupal\commerce_product\Entity\Product;
 use Drupal\commerce_cart\CartManagerInterface;
+use Drupal\commerce_cart\CartProviderInterface;
 
 /**
  * Class CartCompleteSubscriber.
@@ -22,6 +22,20 @@ use Drupal\commerce_cart\CartManagerInterface;
  */
 class CartEventSubscriber implements EventSubscriberInterface {
   /**
+   * The cart manager.
+   *
+   * @var \Drupal\commerce_cart\CartManagerInterface
+   */
+  protected $cartManager;
+  
+  /**
+   * The cart provider.
+   *
+   * @var \Drupal\commerce_cart\CartProviderInterface
+   */
+  protected $cartProvider;
+  
+  /**
    * Drupal\Core\Entity\EntityTypeManager definition.
    *
    * @var \Drupal\Core\Entity\EntityTypeManager
@@ -29,10 +43,19 @@ class CartEventSubscriber implements EventSubscriberInterface {
   protected $entityTypeManager;
   
   /**
-   * Constructor.
+   * Constructs a new CartController object.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManager $entity_type_manager
+   *   The EntityTypeManager.
+   * @param \Drupal\commerce_cart\CartManagerInterface $cart_manager
+   *   The cart manager.
+   * @param \Drupal\commerce_cart\CartProviderInterface $cart_provider
+   *   The cart provider.
    */
-  public function __construct(EntityTypeManager $entity_type_manager) {
+  public function __construct(EntityTypeManager $entity_type_manager, CartManagerInterface $cart_manager, CartProviderInterface $cart_provider) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->cartManager = $cart_manager;
+    $this->cartProvider = $cart_provider;
   }
   
   /**
@@ -46,7 +69,7 @@ class CartEventSubscriber implements EventSubscriberInterface {
   }
   
   /**
-   * Test.
+   * Removes product from the shopping cart if it is already purchased.
    *
    * @param \Drupal\commerce_cart\Event\CartEntityAddEvent $event
    *   The add to cart event.
@@ -54,11 +77,8 @@ class CartEventSubscriber implements EventSubscriberInterface {
   public function checkedPurchased(CartEntityAddEvent $event) {
     $purchased_entity = $event->getEntity();
     $items = $purchased_entity;
-    $cart_price = $items->getPrice();
-    $store_id = $purchased_entity->getStores();
     $store_id = 1;
     $order_type = $purchased_entity->getOrderItemTypeId();
-    
     $cart_manager = \Drupal::service('commerce_cart.cart_manager');
     $cart_provider = \Drupal::service('commerce_cart.cart_provider');
     $entity_manager = \Drupal::entityManager();
@@ -84,14 +104,13 @@ class CartEventSubscriber implements EventSubscriberInterface {
     // Check purchased product.
     $order = Order::load($cart->id());
     foreach ($order->getItems() as $order_item) {
-      $order_item = $order_item->getPurchasedEntity();
       if (in_array($product_roles, $user_roles)) {
-        //$cart_manager->removeOrderItem($cart, $order_item);
-        drupal_set_message('Этот пакет уже был куплен', 'error');
-      }
-      else {
-        dsm('Item did not purchased!');
+        $cart_manager->removeOrderItem($cart, $order_item);
+        drupal_set_message(t('@product has already been purchased by you.', [
+          '@product' => $order_item->getTitle(),
+        ]), 'error');
       }
     }
   }
+  
 }
