@@ -11,6 +11,9 @@ use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\commerce_cart\Event\CartEntityAddEvent;
 use Drupal\commerce_cart\Event\CartEvents;
 use Drupal\commerce_order\Entity\Order;
+use Drupal\user\Entity\User;
+use Drupal\commerce_product\Entity\Product;
+use Drupal\commerce_cart\CartManagerInterface;
 
 /**
  * Class CartCompleteSubscriber.
@@ -37,7 +40,7 @@ class CartEventSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     $events = [
-      CartEvents::CART_ENTITY_ADD => 'changeTotalSumInCart',
+      CartEvents::CART_ENTITY_ADD => 'checkedPurchased',
     ];
     return $events;
   }
@@ -48,7 +51,7 @@ class CartEventSubscriber implements EventSubscriberInterface {
    * @param \Drupal\commerce_cart\Event\CartEntityAddEvent $event
    *   The add to cart event.
    */
-  public function changeTotalSumInCart(CartEntityAddEvent $event) {
+  public function checkedPurchased(CartEntityAddEvent $event) {
     $purchased_entity = $event->getEntity();
     $items = $purchased_entity;
     $cart_price = $items->getPrice();
@@ -63,10 +66,32 @@ class CartEventSubscriber implements EventSubscriberInterface {
     $cart = $cart_provider->getCart($order_type, $store);
     $total_price = $cart->getTotalPrice();
     $total_price = $total_price->getNumber();
-
-    //$order = Order::load($cart->id());
   
-    $total_items = count($cart->getItems());
+    // Get all roles of current user.
+    $userCurrent = \Drupal::currentUser();
+    $user = User::load($userCurrent->id());
+    $user_roles = $user->getRoles();
+  
+    // Get product roles field.
+    $config = \Drupal::config('raketabeats_custom.settings');
+    $role_field = $config->get('field_product_roles');
     
+    // Get products roles.
+    $product_id = $purchased_entity->id();
+    $current_product = Product::load($product_id);
+    $product_roles = $current_product->get($role_field)->getValue()[0]['target_id'];
+    
+    // Check purchased product.
+    $order = Order::load($cart->id());
+    foreach ($order->getItems() as $order_item) {
+      $order_item = $order_item->getPurchasedEntity();
+      if (in_array($product_roles, $user_roles)) {
+        //$cart_manager->removeOrderItem($cart, $order_item);
+        drupal_set_message('Этот пакет уже был куплен', 'error');
+      }
+      else {
+        dsm('Item did not purchased!');
+      }
+    }
   }
 }

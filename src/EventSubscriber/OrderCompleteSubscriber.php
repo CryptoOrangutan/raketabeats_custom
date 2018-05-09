@@ -46,7 +46,6 @@ class OrderCompleteSubscriber implements EventSubscriberInterface {
     $order = $event->getEntity();
     // Order items in the cart.
     $items = $order->getItems();
-    //$order = $order->getTotalPrice();
     $config = \Drupal::config('raketabeats_custom.settings');
     
     foreach ($items as $order_item) {
